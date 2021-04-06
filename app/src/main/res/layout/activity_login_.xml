@@ -4,6 +4,93 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/register"
     tools:context=".Login_Activity">
 
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="175dp"
+        android:layout_marginLeft="175dp"
+        android:layout_marginEnd="175dp"
+        android:layout_marginRight="175dp"
+        android:fontFamily="serif"
+        android:text="Jeeva Rakshak App"
+        android:textColor="#FDD835"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="107dp" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="137dp"
+        android:layout_height="32dp"
+        android:text="User Login"
+        android:textColor="#FFFFFF"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        tools:layout_editor_absoluteX="137dp"
+        tools:layout_editor_absoluteY="169dp" />
+
+    <EditText
+        android:id="@+id/email"
+        android:layout_width="360dp"
+        android:layout_height="48dp"
+        android:background="@color/black"
+        android:ems="10"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:padding="10dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#FFFFFF"
+        tools:layout_editor_absoluteX="25dp"
+        tools:layout_editor_absoluteY="281dp" />
+
+    <EditText
+        android:id="@+id/Password"
+        android:layout_width="360dp"
+        android:layout_height="48dp"
+        android:background="@color/black"
+        android:ems="10"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:padding="10dp"
+        android:textColorHint="#FFFFFF"
+        tools:layout_editor_absoluteX="25dp"
+        tools:layout_editor_absoluteY="389dp" />
+
+    <Button
+        android:id="@+id/regsiterbutton"
+        android:layout_width="378dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:background="@color/white"
+        android:hint="Register"
+        android:padding="10dp"
+        android:text="Register"
+        android:textColor="#0B0A0A"
+        android:textColorHint="#050505"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="496dp" />
+
+    <TextView
+        android:id="@+id/createtext"
+        android:layout_width="243dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="32dp"
+        android:text="New here ? Create Account"
+        android:textColor="#FDD835"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/regsiterbutton" />
 </androidx.constraintlayout.widget.ConstraintLayout>
