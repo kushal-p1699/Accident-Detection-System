@@ -31,7 +31,7 @@ public class Register_Activity extends AppCompatActivity {
         setContentView(R.layout.activity_register_);
 
         mregsiterbutton = findViewById(R.id.regsiterbutton);
-        loginbutton = findViewById(R.id.createtext);
+        loginbutton = findViewById(R.id.id_goToRegister);
 
         fullname = findViewById(R.id.Fullname);
         email = findViewById(R.id.email);
