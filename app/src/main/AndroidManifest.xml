@@ -11,10 +11,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AccidentDetectionSystem">
+<<<<<<< HEAD
         <activity android:name=".Start_tracking"></activity>
         <activity android:name=".Register_Activity" />
         <activity android:name=".Login_Activity" />
         <activity android:name=".MainActivity">
+=======
+        <activity android:name=".Register_Activity"></activity>
+        <activity android:name=".MainActivity" />
+        <activity android:name=".Login_Activity">
+>>>>>>> 2b137f2f402d010d8da7ddeb82d156fd24c55dc5
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

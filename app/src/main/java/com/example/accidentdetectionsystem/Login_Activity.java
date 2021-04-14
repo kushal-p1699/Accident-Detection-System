@@ -19,27 +19,43 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class Login_Activity extends AppCompatActivity {
-    Button mloginbutton;
-    TextView loginbutton;
-    EditText fullname, email, password, confirmpassword, phone;
+    Button loginButton;
+    TextView goToRegisterButton;
+    EditText fullName, email, password, confirmPassword, phone;
     ProgressBar progressbar;
-    FirebaseAuth fauth;
+    FirebaseAuth fAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_);
-        mloginbutton = findViewById(R.id.regsiterbutton);
-        loginbutton = findViewById(R.id.createtext);
 
-        fullname = findViewById(R.id.Fullname);
+        // initialize variables
+        InitializeFields();
+
+        // validate and login
+        Validate();
+
+        // If new user, go to registration page
+        GoToRegister();
+
+    }
+
+    private void InitializeFields() {
+        loginButton = findViewById(R.id.login_btn);
+        goToRegisterButton = findViewById(R.id.id_goToRegister);
+
+        fullName = findViewById(R.id.Fullname);
         email = findViewById(R.id.email);
         password = findViewById(R.id.Password);
-        confirmpassword = findViewById(R.id.confirmPassword);
+        confirmPassword = findViewById(R.id.confirmPassword);
         phone = findViewById(R.id.Phone);
-        fauth = FirebaseAuth.getInstance();
+        fAuth = FirebaseAuth.getInstance();
         progressbar = findViewById(R.id.progressbar);
-        mloginbutton.setOnClickListener(new View.OnClickListener() {
+    }
+
+    private void Validate() {
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String emails = email.getText().toString().trim();
@@ -49,16 +65,17 @@ public class Login_Activity extends AppCompatActivity {
                     email.setError("Email is required");
                 }
                 if (TextUtils.isEmpty(passwords)) {
-                    email.setError("password is required");
+                    password.setError("password is required");
                     return;
                 }
                 if (passwords.length() < 6) {
-                    password.setError("Password must have atleast 6 characters");
+                    password.setError("Password must have at least 6 characters");
                     return;
                 }
-                progressbar.setVisibility(View.VISIBLE);
+//                progressbar.setVisibility(View.VISIBLE);
 
-                fauth.signInWithEmailAndPassword(emails, passwords).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+
+                fAuth.signInWithEmailAndPassword(emails, passwords).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
@@ -66,7 +83,7 @@ public class Login_Activity extends AppCompatActivity {
                             startActivity(new Intent(getApplicationContext(),MainActivity.class));
 
                         }else{
-                            Toast.makeText(Login_Activity.this, "Error occured"+ task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(Login_Activity.this, "Error occurred"+ task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             progressbar.setVisibility(View.GONE);
                         }
 
@@ -74,7 +91,10 @@ public class Login_Activity extends AppCompatActivity {
                 });
             }
         });
-        loginbutton.setOnClickListener(new View.OnClickListener() {
+    }
+
+    private void GoToRegister() {
+        goToRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(getApplicationContext(),Register_Activity.class));
