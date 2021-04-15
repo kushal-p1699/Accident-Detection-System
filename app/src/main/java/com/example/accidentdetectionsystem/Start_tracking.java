@@ -1,18 +1,32 @@
 package com.example.accidentdetectionsystem;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class Start_tracking extends AppCompatActivity implements SensorEventListener{
+import java.text.DecimalFormat;
+import java.util.Formatter;
+import java.util.Locale;
+
+public class Start_tracking extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private TextView gForceText, speedText, soundText, pressureText;
     private Button startTrackingBtn;
@@ -27,7 +41,91 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
         // Initialize all instance here
         Initialize();
 
-        ProcessSensors();
+        startTrackingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ProcessSensors();
+                onResume();
+
+                // check for GPS permission
+                CheckGPSPermission();
+            }
+        });
+
+
+    }
+
+    private void CheckGPSPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            }, 1000);
+        } else {
+            // start the program if permission is granted
+            doStuff();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void doStuff() {
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager != null) {
+//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                // TODO: Consider calling
+//                //    ActivityCompat#requestPermissions
+//                // here to request the missing permissions, and then overriding
+//                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                //                                          int[] grantResults)
+//                // to handle the case where the user grants the permission. See the documentation
+//                // for ActivityCompat#requestPermissions for more details.
+//                return;
+//            }
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
+            Toast.makeText(this, "waiting for gps connection!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateSpeed(CLocation location){
+        float nCurrentSpeed = 0f;
+
+        if(location != null) {
+            location.setUseMetricUnits(this.useMetricUnits());
+            nCurrentSpeed = location.getSpeed();
+        }
+
+        Formatter fmt = new Formatter(new StringBuilder());
+        fmt.format(Locale.US, "%5.1f", nCurrentSpeed);
+        String strCurrentSpeed = fmt.toString();
+        strCurrentSpeed = strCurrentSpeed.replace(" ", "0");
+
+        if(this.useMetricUnits()) {
+            speedText.setText(strCurrentSpeed + " km/h");
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if(location != null) {
+            CLocation myLocation = new CLocation(location, this.useMetricUnits());
+            this.updateSpeed(myLocation);
+        }
+    }
+
+    private boolean useMetricUnits() {
+        return  true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 1000) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                doStuff();
+            } else {
+                finish();
+            }
+        }
     }
 
     private void ProcessSensors() {
@@ -97,7 +195,8 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
         double gForce = Math.sqrt((xValue * xValue) + (yValue * yValue) + (zValue * zValue));
 
         // display accelerometer value in textView
-        gForceText.setText(gForce+"\n");
+        DecimalFormat df = new DecimalFormat("##.00");
+        gForceText.setText(df.format(gForce)+ " m/s sq.");
     }
 
     @Override
