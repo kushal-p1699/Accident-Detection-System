@@ -30,20 +30,24 @@ public class Register_Activity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register_);
 
-        mregsiterbutton = findViewById(R.id.regsiterbutton);
-        loginbutton = findViewById(R.id.id_goToRegister);
+        InitializeFields();
 
-        fullname = findViewById(R.id.Fullname);
-        email = findViewById(R.id.email);
-        password = findViewById(R.id.Password);
-        confirmpassword = findViewById(R.id.confirmPassword);
-        phone = findViewById(R.id.Phone);
-        fauth = FirebaseAuth.getInstance();
-        progressbar = findViewById(R.id.progressbar);
-        if(fauth.getCurrentUser()!=null){
-            startActivity(new Intent(getApplicationContext(),MainActivity.class));
-            finish();
-        }
+        Validate();
+
+        OnLogin();
+
+    }
+
+    private void OnLogin() {
+        loginbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getApplicationContext(),Login_Activity.class));
+            }
+        });
+    }
+
+    private void Validate() {
         mregsiterbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -77,11 +81,18 @@ public class Register_Activity extends AppCompatActivity {
                 });
             }
         });
-        loginbutton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(getApplicationContext(),Login_Activity.class));
-            }
-        });
+    }
+
+    private void InitializeFields() {
+        mregsiterbutton = findViewById(R.id.regsiterbutton);
+        loginbutton = findViewById(R.id.id_goToRegister);
+
+        fullname = findViewById(R.id.Fullname);
+        email = findViewById(R.id.email);
+        password = findViewById(R.id.Password);
+        confirmpassword = findViewById(R.id.confirmPassword);
+        phone = findViewById(R.id.Phone);
+        fauth = FirebaseAuth.getInstance();
+        progressbar = findViewById(R.id.progressbar);
     }
 }

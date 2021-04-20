@@ -2,6 +2,8 @@ package com.example.accidentdetectionsystem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -14,8 +16,10 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,15 +27,36 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
 
 public class Start_tracking extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private TextView gForceText, speedText, soundText, pressureText;
-    private Button startTrackingBtn;
+    Button startTrackingBtn, stopTrackingBtn;
     private SensorManager sensorManager;
     private Sensor accelerometerSensor, pressureSensor;
+
+    MediaRecorder mediaRecorder;
+    Thread runner;
+    private static double mEMA = 0.0;
+    static final private double EMA_FILTER = 0.6;
+    private static final double AMP = 1;// Math.pow(1, 1);
+    public static final int MY_PERMISSIONS_REQUEST = 10;
+
+    DecimalFormat df = new DecimalFormat("00.00");
+
+
+    final Runnable updater = new Runnable() {
+        @Override
+        public void run() {
+            updateSoundText();
+        };
+    };
+
+    final Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,32 +69,52 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
         startTrackingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                stopTrackingBtn.setVisibility(View.VISIBLE);
+                startTrackingBtn.setVisibility(View.GONE);
+
+                Toast.makeText(Start_tracking.this, "Tracking is started...", Toast.LENGTH_SHORT).show();
+
                 ProcessSensors();
                 onResume();
 
-                // check for GPS permission
-                CheckGPSPermission();
+                ProcessGPSSpeed();
+                ProcessSoundTest();
+
             }
         });
 
-
+        // on stop tracking
+        stopTrackingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(Start_tracking.this, "Tracking is stoped..", Toast.LENGTH_SHORT).show();
+                finish();
+                startActivity(getIntent());
+            }
+        });
     }
 
-    private void CheckGPSPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            requestPermissions(new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION
-            }, 1000);
-        } else {
-            // start the program if permission is granted
-            doStuff();
+    private void ProcessSoundTest() {
+        if(runner == null) {
+            runner = new Thread() {
+                public void run() {
+                    while (runner != null){
+                        try{
+                            Thread.sleep(1000);
+                            Log.i("Noise", "Tock");
+                        }catch (InterruptedException e){};
+                        handler.post(updater);
+                    }
+                }
+            };
+            runner.start();
+            Log.d("Noise", "start runner()");
         }
     }
 
     @SuppressLint("MissingPermission")
-    private void doStuff() {
+    private void ProcessGPSSpeed() {
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         if (locationManager != null) {
 //            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -101,7 +146,7 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
         strCurrentSpeed = strCurrentSpeed.replace(" ", "0");
 
         if(this.useMetricUnits()) {
-            speedText.setText(strCurrentSpeed + " km/h");
+            speedText.setText(strCurrentSpeed);
         }
     }
 
@@ -115,17 +160,6 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
 
     private boolean useMetricUnits() {
         return  true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == 1000) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                doStuff();
-            } else {
-                finish();
-            }
-        }
     }
 
     private void ProcessSensors() {
@@ -143,27 +177,39 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
         soundText = (TextView) findViewById(R.id.sound_id);
 
         startTrackingBtn = (Button) findViewById(R.id.startTracking_btn_id);
+        stopTrackingBtn = (Button) findViewById(R.id.stopTrackingBtn_id);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        // start recording
+        startRecorder();
+
+        // register sensor listeners
         if(isAvailable(accelerometerSensor))
             sensorManager.registerListener(this, accelerometerSensor, sensorManager.SENSOR_DELAY_NORMAL);
-        else
-            DisplayNiL(gForceText);
+//        else
+//             DisplayNiL(gForceText);
 
         if(isAvailable(pressureSensor))
             sensorManager.registerListener(Start_tracking.this, pressureSensor, sensorManager.SENSOR_DELAY_NORMAL);
-        else
-            DisplayNiL(pressureText);
+//        else
+//            DisplayNiL(pressureText);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
+        // stop recording
+        stopRecorder();
+
+        // unregister sensor listener
         sensorManager.unregisterListener(this);
     }
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -173,7 +219,7 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
                 break;
 
             case Sensor.TYPE_PRESSURE:
-                pressureText.setText(event.values[0]+"hPa");
+                pressureText.setText(event.values[0]+"");
                 break;
         }
     }
@@ -196,11 +242,70 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
 
         // display accelerometer value in textView
         DecimalFormat df = new DecimalFormat("##.00");
-        gForceText.setText(df.format(gForce)+ " m/s sq.");
+        gForceText.setText(df.format(gForce)+"");
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    // sound Testing snippets
+    private void startRecorder() {
+        if(mediaRecorder == null) {
+            mediaRecorder = new MediaRecorder();
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR);
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mediaRecorder.setOutputFile("/dev/null");
+
+            try
+            {
+                mediaRecorder.prepare();
+            }catch (java.io.IOException ioe) {
+                android.util.Log.e("[Monkey]", "IOException: " + android.util.Log.getStackTraceString(ioe));
+
+            }catch (java.lang.SecurityException e) {
+                android.util.Log.e("[Monkey]", "SecurityException: " + android.util.Log.getStackTraceString(e));
+            }
+            try
+            {
+                mediaRecorder.start();
+            }catch (java.lang.SecurityException e) {
+                android.util.Log.e("[Monkey]", "SecurityException: " + android.util.Log.getStackTraceString(e));
+            }
+
+        }
+    }
+
+    private void stopRecorder() {
+        if (mediaRecorder != null) {
+            mediaRecorder.stop();
+            mediaRecorder.release();
+            mediaRecorder = null;
+        }
+    }
+
+    private void updateSoundText() {
+        double db = soundDb(AMP);
+        if(db < 0) db = 0;
+        soundText.setText(df.format(db));
+    }
+
+    private double getAmplitudeEMA() {
+        double amp = getAmplitude();
+        mEMA = EMA_FILTER * amp + (1.0 - EMA_FILTER) * mEMA;
+        return mEMA;
+    }
+
+    public double soundDb(double amp1){
+        return 20*Math.log10(getAmplitudeEMA() / amp1);
+    }
+
+    private double getAmplitude() {
+        if(mediaRecorder != null)
+            return mediaRecorder.getMaxAmplitude();
+        else
+            return 0;
     }
 }

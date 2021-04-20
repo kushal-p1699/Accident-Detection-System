@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/register"
+    android:visibility="visible"
     tools:context=".Start_tracking">
 
     <TextView
@@ -30,24 +31,24 @@
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.307"
+        app:layout_constraintHorizontal_bias="0.193"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView"
         app:layout_constraintVertical_bias="0.138" />
 
     <TextView
         android:id="@+id/gforce_id"
-        android:layout_width="148dp"
-        android:layout_height="35dp"
+        android:layout_width="65dp"
+        android:layout_height="32dp"
         android:text="0.00"
         android:textColor="#F3E9E9"
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.557"
+        app:layout_constraintHorizontal_bias="0.346"
         app:layout_constraintStart_toEndOf="@+id/textView2"
         app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.139" />
+        app:layout_constraintVertical_bias="0.133" />
 
     <TextView
         android:id="@+id/textView7"
@@ -58,24 +59,24 @@
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.302"
+        app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView2"
         app:layout_constraintVertical_bias="0.126" />
 
     <TextView
         android:id="@+id/speed_id"
-        android:layout_width="144dp"
-        android:layout_height="37dp"
+        android:layout_width="67dp"
+        android:layout_height="35dp"
         android:text="0.00"
         android:textColor="#E4DEDE"
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.543"
+        app:layout_constraintHorizontal_bias="0.304"
         app:layout_constraintStart_toEndOf="@+id/textView7"
         app:layout_constraintTop_toBottomOf="@+id/gforce_id"
-        app:layout_constraintVertical_bias="0.122" />
+        app:layout_constraintVertical_bias="0.132" />
 
     <TextView
         android:id="@+id/textView9"
@@ -86,25 +87,25 @@
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.3"
+        app:layout_constraintHorizontal_bias="0.21"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView7"
         app:layout_constraintVertical_bias="0.187" />
 
     <TextView
         android:id="@+id/pressure_id"
-        android:layout_width="137dp"
-        android:layout_height="33dp"
+        android:layout_width="68dp"
+        android:layout_height="34dp"
         android:layout_marginTop="8dp"
         android:text="0.00"
         android:textColor="#FDF6F6"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.512"
+        app:layout_constraintHorizontal_bias="0.301"
         app:layout_constraintStart_toEndOf="@+id/textView9"
         app:layout_constraintTop_toBottomOf="@+id/speed_id"
-        app:layout_constraintVertical_bias="0.175" />
+        app:layout_constraintVertical_bias="0.178" />
 
     <TextView
         android:id="@+id/textView11"
@@ -115,37 +116,107 @@
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.307"
+        app:layout_constraintHorizontal_bias="0.215"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView9"
-        app:layout_constraintVertical_bias="0.257" />
+        app:layout_constraintVertical_bias="0.253" />
 
     <TextView
         android:id="@+id/sound_id"
-        android:layout_width="130dp"
-        android:layout_height="36dp"
+        android:layout_width="66dp"
+        android:layout_height="35dp"
         android:text="0.00"
         android:textColor="#ECEAEA"
         android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.426"
+        app:layout_constraintHorizontal_bias="0.258"
         app:layout_constraintStart_toEndOf="@+id/textView11"
         app:layout_constraintTop_toBottomOf="@+id/pressure_id"
-        app:layout_constraintVertical_bias="0.262" />
+        app:layout_constraintVertical_bias="0.25" />
 
     <Button
         android:id="@+id/startTracking_btn_id"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="253dp"
+        android:layout_height="59dp"
         android:text="Start Tracking"
         android:textColor="#EDE6E6"
         android:textSize="22sp"
         app:backgroundTint="#0B0A0A"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.54"
+        app:layout_constraintHorizontal_bias="0.554"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView11"
-        app:layout_constraintVertical_bias="0.703" />
+        app:layout_constraintTop_toBottomOf="@+id/textView11" />
+
+    <Button
+        android:id="@+id/stopTrackingBtn_id"
+        android:layout_width="253dp"
+        android:layout_height="59dp"
+        android:text="Stop Tracking"
+        android:textColor="#EDE6E6"
+        android:textSize="22sp"
+        android:visibility="gone"
+        app:backgroundTint="#0B0A0A"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.554"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView11" />
+
+    <TextView
+        android:id="@+id/textv"
+        android:layout_width="63dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="196dp"
+        android:text="m/s sq"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.058"
+        app:layout_constraintStart_toEndOf="@+id/gforce_id"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textv2"
+        android:layout_width="53dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="48dp"
+        android:layout_marginRight="48dp"
+        android:layout_marginBottom="200dp"
+        android:text="dB"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/sound_id" />
+
+    <TextView
+        android:id="@+id/textv5"
+        android:layout_width="53dp"
+        android:layout_height="30dp"
+        android:layout_marginBottom="68dp"
+        android:text="pHa"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/textv2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.333"
+        app:layout_constraintStart_toEndOf="@+id/pressure_id" />
+
+    <TextView
+        android:id="@+id/textv4"
+        android:layout_width="53dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:text="Kmph"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/textv5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.058"
+        app:layout_constraintStart_toEndOf="@+id/speed_id"
+        app:layout_constraintTop_toBottomOf="@+id/textv"
+        app:layout_constraintVertical_bias="0.434" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

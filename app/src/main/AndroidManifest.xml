@@ -4,6 +4,9 @@
     package="com.example.accidentdetectionsystem">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission. ACCESS_COARSE_LOCATION" />
 
@@ -18,10 +21,10 @@
         android:theme="@style/Theme.AccidentDetectionSystem"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".MainActivity"></activity>
-        <activity android:name=".Register_Activity" />
-        <activity android:name=".Login_Activity" />
-        <activity android:name=".Start_tracking">
+        <activity android:name=".Register_Activity"></activity>
+        <activity android:name=".MainActivity" />
+        <activity android:name=".Start_tracking" />
+        <activity android:name=".Login_Activity">
         <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
