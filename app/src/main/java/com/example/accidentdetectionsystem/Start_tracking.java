@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -26,6 +27,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Formatter;
@@ -35,7 +38,7 @@ import java.util.Locale;
 public class Start_tracking extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private TextView gForceText, speedText, soundText, pressureText;
-    Button startTrackingBtn, stopTrackingBtn;
+    Button startTrackingBtn, stopTrackingBtn, logoutBtn;
     private SensorManager sensorManager;
     private Sensor accelerometerSensor, pressureSensor;
 
@@ -91,6 +94,19 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
                 Toast.makeText(Start_tracking.this, "Tracking is stoped..", Toast.LENGTH_SHORT).show();
                 finish();
                 startActivity(getIntent());
+            }
+        });
+
+        onLogout();
+    }
+
+    private void onLogout() {
+        logoutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(getApplicationContext(), Login_Activity.class));
+                finish();
             }
         });
     }
@@ -164,7 +180,6 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
 
     private void ProcessSensors() {
         /** Get an instance of the sensor service, and use that to get an instance of a particular sensor **/
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -178,6 +193,9 @@ public class Start_tracking extends AppCompatActivity implements SensorEventList
 
         startTrackingBtn = (Button) findViewById(R.id.startTracking_btn_id);
         stopTrackingBtn = (Button) findViewById(R.id.stopTrackingBtn_id);
+        logoutBtn = (Button) findViewById(R.id.btn_logout);
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     }
 
     @Override

@@ -219,4 +219,16 @@
         app:layout_constraintTop_toBottomOf="@+id/textv"
         app:layout_constraintVertical_bias="0.434" />
 
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="141dp"
+        android:layout_height="51dp"
+        android:text="Logout"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.532"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startTracking_btn_id"
+        app:layout_constraintVertical_bias="0.466" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
