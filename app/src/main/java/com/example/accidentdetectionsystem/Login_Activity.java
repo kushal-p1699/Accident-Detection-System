@@ -62,7 +62,7 @@ public class Login_Activity extends AppCompatActivity {
 
     private void CheckUserSession() {
         if(fAuth.getCurrentUser() != null){
-            startActivity(new Intent(getApplicationContext(), Start_tracking.class));
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
             finish();
         }
     }
@@ -86,11 +86,11 @@ public class Login_Activity extends AppCompatActivity {
         loginButton = findViewById(R.id.login_btn);
         goToRegister = (TextView) findViewById(R.id.id_goToRegister);
 
-        fullName = findViewById(R.id.Fullname);
+//        fullName = findViewById(R.id.na);
         email = findViewById(R.id.email);
         password = findViewById(R.id.Password);
-        confirmPassword = findViewById(R.id.confirmPassword);
-        phone = findViewById(R.id.Phone);
+//        confirmPassword = findViewById(R.id.confirmPassword);
+//        phone = findViewById(R.id.Phone);
         fAuth = FirebaseAuth.getInstance();
 //        progressbar = findViewById(R.id.progressbar);
     }
@@ -121,7 +121,7 @@ public class Login_Activity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
                             Toast.makeText(Login_Activity.this, "Logged in successfully", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(getApplicationContext(),Start_tracking.class));
+                            startActivity(new Intent(getApplicationContext(),MainActivity.class));
 
                         }else{
                             Toast.makeText(Login_Activity.this, "Error occurred"+ task.getException().getMessage(), Toast.LENGTH_SHORT).show();
