@@ -1,13 +1,18 @@
 package com.example.accidentdetectionsystem;
 
 import android.os.Bundle;
+import android.renderscript.ScriptGroup;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 
+import com.example.accidentdetectionsystem.ui.home.HomeFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -16,10 +21,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,7 +52,39 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        Bundle bundle = getIntent().getExtras();
+        if(bundle != null) {
+            Log.d("MESSAGE RECIVED-----> ", bundle.getString("msg-body"));
+            String sms_from = bundle.getString("msg-from");
+            String sms_body = bundle.getString("msg-body");
+            sendSMSMessage(sms_from, sms_body);
+        }
+
+
+
     }
+
+    private void sendSMSMessage(String sms_form, String sms_body) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        HomeFragment myFragment = new HomeFragment();
+        Bundle b = new Bundle();
+        b.putString("sms_from", sms_form);
+        b.putString("sms_body", sms_body);
+        myFragment.setArguments(b);
+        fragmentTransaction.add(R.id.home_fragment, myFragment).commit();
+
+    }
+
+//    private void sendSMSToFragment(String sms_from, String sms_body) {
+//
+//        getSupportFragmentManager().beginTransaction()
+//                .add(R.id.home_fragment, HomeFragment.newInstance(sms_from, sms_body), "HomeFragment")
+//                .commit();
+//    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -60,4 +99,6 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
+
 }

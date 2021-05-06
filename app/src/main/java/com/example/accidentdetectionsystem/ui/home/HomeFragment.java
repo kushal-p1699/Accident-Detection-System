@@ -2,23 +2,35 @@ package com.example.accidentdetectionsystem.ui.home;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaRecorder;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,32 +38,59 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.navigation.Navigation;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.accidentdetectionsystem.CLocation;
 import com.example.accidentdetectionsystem.Login_Activity;
+import com.example.accidentdetectionsystem.MainActivity;
+import com.example.accidentdetectionsystem.MyReceiver;
 import com.example.accidentdetectionsystem.R;
-import com.example.accidentdetectionsystem.ui.profile.ProfileFragment;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import android.view.View.OnClickListener;
 
-import java.text.DecimalFormat;
-import java.util.Formatter;
-import java.util.Locale;
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class HomeFragment extends Fragment implements SensorEventListener, LocationListener {
-    private TextView gForceText, speedText, soundText, pressureText;
-    Button startTrackingBtn, stopTrackingBtn, logoutBtn;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.Phaser;
+
+public class HomeFragment extends Fragment implements SensorEventListener, LocationListener, HospitalData.HospitalCallback {
+
+    private TextView gForceText, speedText, soundText, pressureText, alarmTimeLeftText;
+    private Button startTrackingBtn, stopTrackingBtn, logoutBtn, cancelAlarm;
     private SensorManager sensorManager;
-    private Sensor accelerometerSensor, pressureSensor;
+    private Sensor accelerometerSensor;
+    private double lastUpdate = 0;
 
     private FirebaseAuth fAuth;
     private FirebaseFirestore fStore;
@@ -64,6 +103,32 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
     private static final double AMP = 1;// Math.pow(1, 1);
     public static final int MY_PERMISSIONS_REQUEST = 10;
 
+    public double _gForce;
+    public double _speed;
+    public double _pressure;
+    public double _sound;
+
+    final double threshold_gForce = 1.99;
+    final double threshold_pressure = 1010.00;
+    final double threshold_speed = 24.00;
+    final double threshold_sound = 80.00;
+
+    final double SVP = 1d;
+    final double ET = 1d;
+    final double MP = 1d;
+
+    Dialog dialog;
+
+    CountDownTimer countDownTimer;
+
+    String address, latitude, longitude;
+
+    final Handler handler = new Handler();
+    DecimalFormat df = new DecimalFormat("00.00");
+
+    private final  String url = "https://api.openweathermap.org/data/2.5/weather";
+    private final String appId = "13a249338dd35185b7e593a1453cbf5e";
+
     final Runnable updater = new Runnable() {
         @Override
         public void run() {
@@ -71,23 +136,32 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         };
     };
 
-    final Handler handler = new Handler();
+    String sms_from;
+    String sms_body;
 
-    DecimalFormat df = new DecimalFormat("00.00");
+    public boolean isProcessRunning = false;
+    HospitalData hospitalData;
+
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-
         View root = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Initialize all instance here
         Initialize(root);
+
+        // get all hospital data
+        readHospitalData();
+
+
+        // get all Drivers Details data
+        readDriversData();
+
 
         startTrackingBtn.setOnClickListener(new OnClickListener(){
             @Override
             public void onClick(View v) {
 
-                // validate user data
-                // update profile before start tracking
+                isProcessRunning = true;
 
                 final DocumentReference documentReference = fStore.collection("users").document(userId);
                 documentReference.addSnapshotListener(getActivity(), new EventListener<DocumentSnapshot>() {
@@ -121,7 +195,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                             /** if profile is updated then, Start tracking **/
 
                             stopTrackingBtn.setVisibility(View.VISIBLE);
-                            startTrackingBtn.setVisibility(View.GONE);
+                            startTrackingBtn.setVisibility(View.INVISIBLE);
 
                             Toast.makeText(getActivity(), "Tracking is started...", Toast.LENGTH_SHORT).show();
 
@@ -130,6 +204,14 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
                             ProcessGPSSpeed();
                             ProcessSoundTest();
+                            getWeatherDetails();
+
+
+                            // continuously process data to detect accident
+                            ProcessDataToDetectAccident();
+
+
+
                         }
                     }
                 });
@@ -148,33 +230,147 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         stopTrackingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("OnStop---> ", "working....");
                 new Handler().post(new Runnable() {
 
                     @Override
                     public void run()
                     {
-                        Intent intent = getActivity().getIntent();
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK
-                                | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        getActivity().overridePendingTransition(0, 0);
-                        getActivity().finish();
-
-                        getActivity().overridePendingTransition(0, 0);
-                        startActivity(intent);
+                        StopTrackingData();
                     }
                 });
             }
         });
 
+        // receive message
+        readSMSData();
+
+        Log.d("Hospitals Data --->", LoadHospitalSharedPerf().toString());
+        Log.d("Drivers Data --->", LoadDriversSharedPref().toString());
+
+
         return root;
     }
 
-    private boolean IsProfileUpdate() {
+    private void readHospitalData() {
+        // read callback here
+        hospitalData = new HospitalData();
+        hospitalData.getHospitalData();
+        hospitalData.setHospitalCallback(this);
+    }
 
-        boolean[] flag = {true};
 
+    @Override
+    public void DisplayHospitalData(Map<String, Map<String, String>> map) {
+        // store map in sharedPreference
+        StoreMapHospitalMapInSharedPref(map);
 
-        return flag[0];
+    }
+
+    private void StoreMapHospitalMapInSharedPref(Map<String, Map<String, String>> map) {
+
+        Gson gson = new Gson();
+        String mapString = gson.toJson(map);
+//        Log.d("KEYS IDS-->",mapString);
+
+        SharedPreferences hSharedPref = getContext().getSharedPreferences("HospitalPref", Context.MODE_PRIVATE);
+        hSharedPref.edit().putString("HospitalMap", mapString).apply();
+
+    }
+
+    private Map<String, Map<String, String>> LoadHospitalSharedPerf(){
+        SharedPreferences hSharedPref = getContext().getSharedPreferences("HospitalPref", Context.MODE_PRIVATE);
+        Map<String, Map<String, String>> map = new HashMap<>();
+        String storedHashMapString = hSharedPref.getString("HospitalMap", "oopsDintWork");
+
+        Gson gson = new Gson();
+        java.lang.reflect.Type type = new TypeToken<Map<String, Map<String, String>>>(){}.getType();
+        map = gson.fromJson(storedHashMapString, type);
+
+        return map;
+    }
+
+    private Map<String, Map<String, Map<String, String>>> LoadDriversSharedPref(){
+
+        SharedPreferences hSharedPref = getContext().getSharedPreferences("DriversPref", Context.MODE_PRIVATE);
+        Map<String, Map<String, Map<String, String>>> map = new HashMap<>();
+        String storedHashMapString = hSharedPref.getString("DriversMap", "oopsDintWork");
+
+        Gson gson = new Gson();
+        java.lang.reflect.Type type = new TypeToken<Map<String, Map<String, Map<String, String>>>>(){}.getType();
+        map = gson.fromJson(storedHashMapString, type);
+
+        return map;
+
+    }
+
+    private void readDriversData() {
+        Map<String, Map<String, Map<String, String>>> drivers = new HashMap<>();
+        int size = LoadHospitalSharedPerf().size();
+        final int[] count = {0};
+        for(Map.Entry<String, Map<String, String>> itr : LoadHospitalSharedPerf().entrySet()){
+//            Log.d("KEYS IDS-->",itr.getKey());
+
+            CollectionReference collectionReference = fStore.collection("Drivers Details").document(itr.getKey()).collection("Drivers");
+            collectionReference.get()
+                    .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+
+                        Map<String, Map<String, String>> map = new HashMap<>();
+                        @Override
+                        public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                            for(QueryDocumentSnapshot queryDocumentSnapshot: queryDocumentSnapshots){
+//                            Log.d("DRIVERS DATA-->",queryDocumentSnapshot.getId());
+                                Map<String, String> map1 = new HashMap<>();
+                                map1.put("ambulance_number", queryDocumentSnapshot.getString("d_name"));
+                                map1.put("d_phone", queryDocumentSnapshot.getString("d_name"));
+                                map1.put("d_name",queryDocumentSnapshot.getString("d_name"));
+                                map.put(queryDocumentSnapshot.getId(), map1);
+                            }
+
+                            count[0]++;
+                            drivers.put(itr.getKey(), map);
+
+                            if(count[0] == size){
+                                // add details to shared preference
+                                Gson gson = new Gson();
+                                String mapString = gson.toJson(drivers);
+
+                                SharedPreferences hSharedPref = getContext().getSharedPreferences("DriversPref", Context.MODE_PRIVATE);
+                                hSharedPref.edit().putString("DriversMap", mapString).apply();
+
+                            }
+                        }
+                    });
+        }
+
+        Log.d("DRIVERS DATA-->",drivers.toString());
+
+    }
+
+    private void readSMSData() {
+        Bundle bundle = this.getArguments();
+        if(bundle != null){
+
+            sms_body = bundle.getString("sms_body");
+            sms_from = bundle.getString("sms_from");
+            Log.d("TESTING----->", sms_body+"/////");
+            Log.d("TESTING----->", sms_from+"/////");
+
+            if(sms_from.equals("+919845890090") && sms_body.equalsIgnoreCase("yes")){
+                SendCancelResponseToOthers();
+            }
+
+        }else{
+            Log.d("TESTING----->", "BVC work ala plaease");
+        }
+
+    }
+
+    private void SendCancelResponseToOthers() {
+
+        String cancelResponseMessage = "Patient is picked up by other driver, Thank you";
+        sendMessage("9845890090", cancelResponseMessage);
+
     }
 
     private void Initialize(View v) {
@@ -183,7 +379,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         pressureText = (TextView) v.findViewById(R.id.id_pressure);
         soundText = (TextView) v.findViewById(R.id.id_sound);
 
-        startTrackingBtn = (Button) v.findViewById(R.id.id_startTractkingBtn);
+        startTrackingBtn = (Button) v.findViewById(R.id.id_startTrackingBtn);
         stopTrackingBtn = (Button) v.findViewById(R.id.id_stopTrackingBtn);
         logoutBtn = (Button) v.findViewById(R.id.logout_btn_id);
 
@@ -191,13 +387,140 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         fAuth = FirebaseAuth.getInstance();
         fStore = FirebaseFirestore.getInstance();
         userId = fAuth.getCurrentUser().getUid();
+
+        dialog = new Dialog(getContext());
+
+    }
+
+    private void ProcessDataToDetectAccident() {
+
+        if(isDetected(_gForce, _pressure, _speed, _sound, SVP, ET, MP)){
+            Log.d("ALERT-->", "Accident Detected!!!");
+
+            // alert alarm to the driver
+            OpenAlarmDialog();
+
+            return;
+
+        }else{
+            Log.d("ALERT-->", "DETECTING....");
+        }
+
+        if(isProcessRunning)
+            refresh(1000);
+    }
+
+    private void OpenAlarmDialog() {
+
+//        StopTrackingData();
+
+        dialog.setContentView(R.layout.alarm_dialog_layout);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setCancelable(false);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        cancelAlarm = dialog.findViewById(R.id.id_cancelAlarmBtn);
+        alarmTimeLeftText = dialog.findViewById(R.id.id_alarm_time_left);
+        boolean[] isCanceled = {false};
+
+        // close dialog when cancel button is clicked
+        cancelAlarm.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isCanceled[0] = true;
+                CancelAlarmAlert();
+                countDownTimer.cancel();
+
+            }
+        });
+
+        // close dialog after 10sec send Location to Hospital
+        if(!isCanceled[0]){
+            countDownTimer = new CountDownTimer(10000, 1000) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    alarmTimeLeftText.setText((millisUntilFinished / 1000) +" seconds");
+                }
+
+                @Override
+                public void onFinish() {
+
+                    // send location vis SMS
+                    String sendTo = "9845890090";
+                    String gpsLink = "https://www.google.com/maps/search/?api=1&query="+latitude+","+longitude;
+                    String smsBody = "There is an emergency!! "+"\n"+"Name : ABC"+"\n"+"Blood Group: AB+"+"\n"+"Family Contact Number: 995958451"+
+                            "\n"+"Accident Spot: "+address+"\n\n"+"Location: "+gpsLink;
+                    //Log.d("GPS LOCATION-->", gpsLink);
+                    sendMessage(sendTo, smsBody);
+                    Toast.makeText(getContext(), "Location sent to hospital", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                    StopTrackingData();
+                }
+            }.start();
+        }
+
+//        if(isProcessRunning)
+            dialog.show();
+    }
+
+    private void sendMessage(String sendTo, String smsBody){
+        SmsManager smsManager = SmsManager.getDefault();
+        ArrayList<String> smsMessageParts = smsManager.divideMessage(smsBody);
+        Log.d("MESSAGE TESTING ---->", "sentTo  :"+sendTo+" body: "+smsBody);
+        smsManager.sendMultipartTextMessage(sendTo, null, smsMessageParts, null, null);
+    }
+
+    private void StopTrackingData() {
+        isProcessRunning = false;
+        new Handler().post(new Runnable() {
+            @Override
+            public void run()
+            {
+                Intent intent = getActivity().getIntent();
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                getActivity().overridePendingTransition(0, 0);
+                getActivity().finish();
+
+                getActivity().overridePendingTransition(0, 0);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void CancelAlarmAlert() {
+        StopTrackingData();
+        dialog.dismiss();
+
+    }
+
+    private boolean isDetected(double gForce, double pressure, double speed, double sound, double SVP, double ET, double MP) {
+        boolean b = (gForce / threshold_gForce) + (sound / threshold_sound) + (pressure / threshold_pressure) >= 1;
+        if(b && speed >= threshold_speed)
+            return true;
+        else if((gForce / threshold_gForce) + (sound / threshold_sound) + (pressure / threshold_pressure) + (SVP / 2.06) >= 3)
+            return true;
+        else if(b && ET < MP)
+            return true;
+        else
+            return false;
+    }
+
+    private void refresh(int ms){
+        final Handler handler = new Handler();
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                ProcessDataToDetectAccident();
+            }
+        };
+
+        handler.postDelayed(runnable, ms);
     }
 
     private void ProcessSensors() {
         /** Get an instance of the sensor service, and use that to get an instance of a particular sensor **/
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
     }
 
     @SuppressLint("MissingPermission")
@@ -252,6 +575,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         if(this.useMetricUnits()) {
             speedText.setText(strCurrentSpeed);
+            _speed = Double.valueOf(strCurrentSpeed);
         }
     }
 
@@ -272,10 +596,6 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 //        else
 //             DisplayNiL(gForceText);
 
-        if(isAvailable(pressureSensor))
-            sensorManager.registerListener(this, pressureSensor, sensorManager.SENSOR_DELAY_NORMAL);
-//        else
-//            DisplayNiL(pressureText);
     }
 
     @Override
@@ -287,6 +607,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         // unregister sensor listener
         sensorManager.unregisterListener(this);
+
     }
 
     @Override
@@ -295,22 +616,30 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
             case Sensor.TYPE_ACCELEROMETER:
                 processAccelerometerSensor(event.values[0], event.values[1], event.values[2]);
                 break;
-
-            case Sensor.TYPE_PRESSURE:
-                pressureText.setText(event.values[0]+"");
-                break;
         }
     }
 
     private void processAccelerometerSensor(double xValue, double yValue, double zValue) {
-        //this will give you the accelerometer values
-        // index 0 for x axis, 1 for y axis and, z for z axis
-        //accelerometerText.setText(event.values[0]+"\n"+event.values[1]+"\n"+event.values[2])
-        double gForce = Math.sqrt((xValue * xValue) + (yValue * yValue) + (zValue * zValue));
 
-        // display accelerometer value in textView
-        DecimalFormat df = new DecimalFormat("##.00");
-        gForceText.setText(df.format(gForce)+"");
+        double curTime = System.currentTimeMillis();
+
+        if ((curTime - lastUpdate) > 100) {
+            double diffTime = (curTime - lastUpdate);
+            lastUpdate = curTime;
+
+            //this will give you the accelerometer values
+            // index 0 for x axis, 1 for y axis and, z for z axis
+            //accelerometerText.setText(event.values[0]+"\n"+event.values[1]+"\n"+event.values[2])
+            double gForce = Math.sqrt((xValue * xValue) + (yValue * yValue) + (zValue * zValue));
+
+            // convert m/sec sq to g
+            gForce = (0.10197 * gForce) / 1;
+
+            // display accelerometer value in textView
+            DecimalFormat df1 = new DecimalFormat("00.00");
+            gForceText.setText(df1.format(gForce)+"");
+            _gForce = gForce;
+        }
     }
 
     private boolean isAvailable(Sensor sensor) {
@@ -359,6 +688,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         double db = soundDb(AMP);
         if(db < 0) db = 0;
         soundText.setText(df.format(db));
+        _sound = db;
     }
 
     private double getAmplitudeEMA() {
@@ -390,6 +720,61 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
             CLocation myLocation = new CLocation(location, this.useMetricUnits());
             this.updateSpeed(myLocation);
         }
+
+        // log longitude and latitude value
+        //Log.d("LONGITUDE/LATITUDE", location.getLatitude()+" | "+ location.getLongitude());
+        latitude = String.valueOf(location.getLatitude());
+        longitude = String.valueOf(location.getLongitude());
+//        Log.d("LONGITUDE/LATITUDE", latitude+" | "+ longitude);
+
+        // get address
+        try{
+            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            if(addresses.size() > 0){
+                address = addresses.get(0).getAddressLine(0);
+//            Log.d("CURRENT ADDRESS", address);
+
+            }else{
+                Log.d("CURRENT ADDRESS", null);
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
     }
 
+    public void getWeatherDetails() {
+        String tempUrl = "";
+        String city = "bangalore";
+        String country = "india";
+
+        tempUrl = url + "?q=" + city + "," + country + "&appid=" + appId;
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, tempUrl, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("response---->", response);
+                String output = "";
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    JSONArray jsonArray = jsonObject.getJSONArray("weather");
+                    JSONObject jsonObjectWeather = jsonArray.getJSONObject(0);
+                    String description = jsonObjectWeather.getString("description");
+                    JSONObject jsonObjectMain = jsonObject.getJSONObject("main");
+
+                    double pressure = jsonObjectMain.getInt("pressure");
+                    pressureText.setText((pressure)+"");
+                    //checkAccidentDetection.set_pressure(pressure);
+                    _pressure = pressure;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, error -> Log.d("response error-->", error.toString()));
+        RequestQueue requestQueue = Volley.newRequestQueue(getContext());
+        requestQueue.add(stringRequest);
+    }
 }

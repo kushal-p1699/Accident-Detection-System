@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,8 +25,7 @@ public class Login_Activity extends AppCompatActivity {
     private static final int MY_PERMISSIONS_REQUEST = 1000;
     Button loginButton;
     TextView goToRegister;
-    EditText fullName, email, password, confirmPassword, phone;
-    ProgressBar progressbar;
+    EditText email, password;
     FirebaseAuth fAuth;
 
     @Override
@@ -42,6 +40,8 @@ public class Login_Activity extends AppCompatActivity {
                             Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             Manifest.permission.ACCESS_FINE_LOCATION,
                             Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.SEND_SMS,
+                            Manifest.permission.RECEIVE_SMS
                     }, MY_PERMISSIONS_REQUEST);
 
                 }
@@ -83,16 +83,12 @@ public class Login_Activity extends AppCompatActivity {
     }
 
     private void InitializeFields() {
-        loginButton = findViewById(R.id.login_btn);
-        goToRegister = (TextView) findViewById(R.id.id_goToRegister);
+        loginButton = findViewById(R.id.id_login_btnLogin);
+        goToRegister = (TextView) findViewById(R.id.tv_goToregister);
+        email = findViewById(R.id.id_login_email);
+        password = findViewById(R.id.id_login_password);
 
-//        fullName = findViewById(R.id.na);
-        email = findViewById(R.id.email);
-        password = findViewById(R.id.Password);
-//        confirmPassword = findViewById(R.id.confirmPassword);
-//        phone = findViewById(R.id.Phone);
         fAuth = FirebaseAuth.getInstance();
-//        progressbar = findViewById(R.id.progressbar);
     }
 
     private void Validate() {

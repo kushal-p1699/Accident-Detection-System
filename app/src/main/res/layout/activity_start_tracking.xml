@@ -156,7 +156,7 @@
         android:text="Stop Tracking"
         android:textColor="#EDE6E6"
         android:textSize="22sp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:backgroundTint="#0B0A0A"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

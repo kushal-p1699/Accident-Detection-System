@@ -48,14 +48,14 @@ public class Register_Activity extends AppCompatActivity {
     }
 
     private void InitializeFields() {
-        registerBtn = findViewById(R.id.regsiterbutton);
-        loginBtn = findViewById(R.id.id_goToRegister);
+        registerBtn = findViewById(R.id.id_reg_btnRegister);
+        loginBtn = findViewById(R.id.tv_gotoLogin);
 
-        name = findViewById(R.id.name_id);
-        email = findViewById(R.id.email_id);
-        password = findViewById(R.id.Password);
-        confirmPassword = findViewById(R.id.confirmPassword);
-        phone = findViewById(R.id.Phone);
+        name = findViewById(R.id.id_reg_name);
+        email = findViewById(R.id.id_reg_email);
+        password = findViewById(R.id.id_reg_password);
+        confirmPassword = findViewById(R.id.id_reg_confirmPassword);
+        phone = findViewById(R.id.id_reg_Phone);
 
         fAuth = FirebaseAuth.getInstance();
         fStore = FirebaseFirestore.getInstance();
