@@ -21,6 +21,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaRecorder;
+import android.opengl.Visibility;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -86,7 +87,7 @@ import java.util.concurrent.Phaser;
 
 public class HomeFragment extends Fragment implements SensorEventListener, LocationListener, HospitalData.HospitalCallback {
 
-    private TextView gForceText, speedText, soundText, pressureText, alarmTimeLeftText;
+    private TextView gForceText, speedText, soundText, pressureText, alarmTimeLeftText, left_tv;
     private Button startTrackingBtn, stopTrackingBtn, logoutBtn, cancelAlarm;
     private SensorManager sensorManager;
     private Sensor accelerometerSensor;
@@ -192,6 +193,22 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                                     }).create().show();
                         }else{
 
+                            // store Profile Data in SharedPref
+                            Map<String, String> pData = new HashMap<>();
+
+                            pData.put("p_name", value.getString("name"));
+                            pData.put("p_email", value.getString("email"));
+                            pData.put("p_phone", value.getString("phone"));
+                            pData.put("blood_group", value.getString("blood group"));
+                            pData.put("help phone1", value.getString("help phone1"));
+                            pData.put("help phone2", value.getString("help phone3"));
+                            pData.put("help phone3", value.getString("help phone3"));
+
+                            StoreProfileDataToPref(pData);
+
+//                            Log.d("Profile Data --->", LoadProfilePref().toString());
+
+
                             /** if profile is updated then, Start tracking **/
 
                             stopTrackingBtn.setVisibility(View.VISIBLE);
@@ -252,6 +269,27 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         return root;
     }
 
+    private void StoreProfileDataToPref(Map<String, String> pData) {
+        Gson gson = new Gson();
+        String mapString = gson.toJson(pData);
+        Log.d("KEYS IDS-->",mapString);
+
+        SharedPreferences hSharedPref = getContext().getSharedPreferences("ProfileData", Context.MODE_PRIVATE);
+        hSharedPref.edit().putString("ProfileMap", mapString).apply();
+    }
+
+    private Map<String, String> LoadProfilePref(){
+        SharedPreferences hSharedPref = getContext().getSharedPreferences("ProfileData", Context.MODE_PRIVATE);
+        Map<String, String> map = new HashMap<>();
+        String storedHashMapString = hSharedPref.getString("ProfileMap", "oopsDintWork");
+
+        Gson gson = new Gson();
+        java.lang.reflect.Type type = new TypeToken<Map<String, String>>(){}.getType();
+        map = gson.fromJson(storedHashMapString, type);
+
+        return map;
+    }
+
     private void readHospitalData() {
         // read callback here
         hospitalData = new HospitalData();
@@ -295,6 +333,8 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         SharedPreferences hSharedPref = getContext().getSharedPreferences("DriversPref", Context.MODE_PRIVATE);
         Map<String, Map<String, Map<String, String>>> map = new HashMap<>();
         String storedHashMapString = hSharedPref.getString("DriversMap", "oopsDintWork");
+        Log.d("LoADed DATA-->",storedHashMapString);
+
 
         Gson gson = new Gson();
         java.lang.reflect.Type type = new TypeToken<Map<String, Map<String, Map<String, String>>>>(){}.getType();
@@ -303,6 +343,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         return map;
 
     }
+
 
     private void readDriversData() {
         Map<String, Map<String, Map<String, String>>> drivers = new HashMap<>();
@@ -319,10 +360,10 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                         @Override
                         public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                             for(QueryDocumentSnapshot queryDocumentSnapshot: queryDocumentSnapshots){
-//                            Log.d("DRIVERS DATA-->",queryDocumentSnapshot.getId());
+//                            Log.d("DRIVERS DATA-->",queryDocumentSnapshot.toString());
                                 Map<String, String> map1 = new HashMap<>();
-                                map1.put("ambulance_number", queryDocumentSnapshot.getString("d_name"));
-                                map1.put("d_phone", queryDocumentSnapshot.getString("d_name"));
+                                map1.put("ambulance_number", queryDocumentSnapshot.getString("ambulance_number"));
+                                map1.put("d_phone", queryDocumentSnapshot.getString("d_phone"));
                                 map1.put("d_name",queryDocumentSnapshot.getString("d_name"));
                                 map.put(queryDocumentSnapshot.getId(), map1);
                             }
@@ -350,27 +391,38 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
     private void readSMSData() {
         Bundle bundle = this.getArguments();
         if(bundle != null){
-
             sms_body = bundle.getString("sms_body");
             sms_from = bundle.getString("sms_from");
             Log.d("TESTING----->", sms_body+"/////");
             Log.d("TESTING----->", sms_from+"/////");
 
-            if(sms_from.equals("+919845890090") && sms_body.equalsIgnoreCase("yes")){
-                SendCancelResponseToOthers();
+            if(sms_body.equalsIgnoreCase("yes")){
+                SendCancelResponseToOthers(sms_from);
             }
 
         }else{
-            Log.d("TESTING----->", "BVC work ala plaease");
+            Log.d("TESTING----->", "BVC work ala please");
         }
 
     }
 
-    private void SendCancelResponseToOthers() {
+    private void SendCancelResponseToOthers(String sms_from) {
 
         String cancelResponseMessage = "Patient is picked up by other driver, Thank you";
-        sendMessage("9845890090", cancelResponseMessage);
 
+        Map<String, Map<String, Map<String, String>>> d_map = LoadDriversSharedPref();
+
+        String sendTo = "";
+
+        for(Map.Entry<String, Map<String, Map<String, String>>> itr : d_map.entrySet()){
+            for(Map.Entry<String, Map<String, String>> itr1 : itr.getValue().entrySet()){
+                Log.d("Name: ", itr1.getValue().get("d_phone"));
+                sendTo = itr1.getValue().get("d_phone");
+                if(!("+91"+sendTo).equals(sms_from)){
+                    sendMessage(sendTo, cancelResponseMessage);
+                }
+            }
+        }
     }
 
     private void Initialize(View v) {
@@ -378,6 +430,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         speedText = (TextView) v.findViewById(R.id.id_speed);
         pressureText = (TextView) v.findViewById(R.id.id_pressure);
         soundText = (TextView) v.findViewById(R.id.id_sound);
+        left_tv = (TextView) v.findViewById(R.id.tv_id_left);
 
         startTrackingBtn = (Button) v.findViewById(R.id.id_startTrackingBtn);
         stopTrackingBtn = (Button) v.findViewById(R.id.id_stopTrackingBtn);
@@ -445,13 +498,32 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                 @Override
                 public void onFinish() {
 
-                    // send location vis SMS
-                    String sendTo = "9845890090";
+//                    alarmTimeLeftText.setText("Accident is informed to Hospitals \n Waiting for response...");
+//                    left_tv.setVisibility(View.GONE);
+
+
                     String gpsLink = "https://www.google.com/maps/search/?api=1&query="+latitude+","+longitude;
-                    String smsBody = "There is an emergency!! "+"\n"+"Name : ABC"+"\n"+"Blood Group: AB+"+"\n"+"Family Contact Number: 995958451"+
-                            "\n"+"Accident Spot: "+address+"\n\n"+"Location: "+gpsLink;
-                    //Log.d("GPS LOCATION-->", gpsLink);
-                    sendMessage(sendTo, smsBody);
+                    String sendTo = "";
+                    String name = "";
+                    Map<String, String> p_map = LoadProfilePref();
+                    Map<String, Map<String, Map<String, String>>> d_map = LoadDriversSharedPref();
+
+                    for(Map.Entry<String, Map<String, Map<String, String>>> itr : d_map.entrySet()){
+                        for(Map.Entry<String, Map<String, String>> itr1 : itr.getValue().entrySet()){
+                          Log.d("Name: ", itr1.getValue().get("d_phone"));
+                            sendTo = itr1.getValue().get("d_phone");
+                            name = itr1.getValue().get("d_name");
+                            String smsBody = "Hey, "+name+"\n\n"+"There is an emergency!!"+"\n"+"Person with name "+p_map.get("p_name")+" met with an accident"+"\n\n"
+                                    +"Blood Group: "+p_map.get("blood_group")+"\n"+"Family Contact Number: "+"\n"
+                                    +p_map.get("help phone1")+"\n"
+                                    +p_map.get("help phone2")+"\n"
+                                    +p_map.get("help phone3")+"\n"
+                                    +"\n"+"Accident Spot: "+address+"\n\n"+"Location: "+gpsLink+"\n\n"
+                                    +"If you're available to pick him up, Please replay 'YES' to this message"+"\n";
+                            sendMessage(sendTo, smsBody);
+                        }
+                    }
+
                     Toast.makeText(getContext(), "Location sent to hospital", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                     StopTrackingData();
