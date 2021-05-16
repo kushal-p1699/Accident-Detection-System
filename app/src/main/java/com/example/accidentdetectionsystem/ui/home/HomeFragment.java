@@ -82,6 +82,7 @@ import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -415,7 +416,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
             }
 
         }else{
-            Log.d("TESTING----->", "BVC work ala please");
+//            Log.d("TESTING----->", "BVC work ala please");
         }
 
     }
@@ -434,6 +435,38 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                 sendTo = itr1.getValue().get("d_phone");
                 if(!("+91"+sendTo).equals(sms_from)){
                     sendMessage(sendTo, cancelResponseMessage);
+                }else{
+                    // store the patient data in shared ref
+                    String driver_name = itr1.getValue().get("d_name");
+                    String HospitalKey = itr.getKey();
+                    String p_name = LoadProfilePref().get("p_name");
+                    String p_number = LoadProfilePref().get("p_phone");
+                    String p_blood_group = LoadProfilePref().get("blood_group");
+                    String help_contact = LoadProfilePref().get("help phone1")+" "+LoadProfilePref().get("help phone2")+" "+LoadProfilePref().get("help phone3");
+
+                    SharedPreferences pref = getActivity().getSharedPreferences("LocationPref", Context.MODE_PRIVATE);
+                    String gps_location = pref.getString("location", "nothing");
+                    String AccidentDate = java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime());
+
+                    Map<String, String> map = new HashMap<>();
+                    map.put("p_name", p_name);
+                    map.put("p_number", p_number);
+                    map.put("driver_name", driver_name);
+                    map.put("p_blood_group", p_blood_group);
+                    map.put("help_contact", help_contact);
+                    map.put("gps_location", gps_location);
+                    map.put("AccidentDate", AccidentDate);
+
+
+
+                    // store it into accident detected table
+                    DocumentReference documentReference = fStore.collection("accident detected").document(HospitalKey);
+                    documentReference.set(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            Log.d("Detected Data", "detected data stored --------->"+HospitalKey);
+                        }
+                    });
                 }
             }
         }
@@ -518,6 +551,14 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
 
                     String gpsLink = "https://www.google.com/maps/search/?api=1&query="+latitude+","+longitude;
+
+                    // store gps location
+                    SharedPreferences.Editor editor = getActivity().getSharedPreferences("LocationPref", Context.MODE_PRIVATE).edit();
+                    editor.putString("location", gpsLink);
+                    editor.putString("address", address);
+                    editor.apply();
+
+
                     String sendTo = "";
                     String name = "";
                     Map<String, String> p_map = LoadProfilePref();
