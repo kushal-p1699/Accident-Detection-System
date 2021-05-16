@@ -1,8 +1,10 @@
 package com.example.accidentdetectionsystem;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
-import android.renderscript.ScriptGroup;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 
@@ -10,7 +12,9 @@ import com.example.accidentdetectionsystem.ui.home.HomeFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.navigation.NavController;
@@ -20,9 +24,6 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_profile, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_profile, R.id.nav_resetPassword)
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
@@ -60,6 +61,23 @@ public class MainActivity extends AppCompatActivity {
             String sms_body = bundle.getString("msg-body");
             sendSMSMessage(sms_from, sms_body);
         }
+    }
+
+    public void OnLogout(MenuItem menuItem){
+
+        // alert confirmation dialog
+        new AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are sure you want to logout?")
+                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // logout
+                        FirebaseAuth.getInstance().signOut();
+                        startActivity(new Intent(getApplicationContext(), Login_Activity.class));
+                    }
+                })
+                .setNegativeButton("NO", null).show();
 
 
 
@@ -76,13 +94,6 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.add(R.id.home_fragment, myFragment).commit();
 
     }
-
-//    private void sendSMSToFragment(String sms_from, String sms_body) {
-//
-//        getSupportFragmentManager().beginTransaction()
-//                .add(R.id.home_fragment, HomeFragment.newInstance(sms_from, sms_body), "HomeFragment")
-//                .commit();
-//    }
 
 
 

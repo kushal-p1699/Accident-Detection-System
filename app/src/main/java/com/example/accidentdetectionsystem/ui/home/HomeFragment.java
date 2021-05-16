@@ -92,8 +92,8 @@ import java.util.concurrent.Phaser;
 
 public class HomeFragment extends Fragment implements SensorEventListener, LocationListener, HospitalData.HospitalCallback {
 
-    private TextView gForceText, speedText, soundText, pressureText, alarmTimeLeftText, left_tv;
-    private Button startTrackingBtn, stopTrackingBtn, logoutBtn, cancelAlarm;
+    private TextView gForceText, speedText, soundText, pressureText, alarmTimeLeftText;
+    private Button startTrackingBtn, stopTrackingBtn, cancelAlarm;
     private SensorManager sensorManager;
     private Sensor accelerometerSensor;
     private ImageView carRunningGif;
@@ -244,14 +244,6 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                         }
                     }
                 });
-            }
-        });
-
-        logoutBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                startActivity(new Intent(getActivity(), Login_Activity.class));
             }
         });
 
@@ -452,11 +444,9 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         speedText = (TextView) v.findViewById(R.id.id_speed);
         pressureText = (TextView) v.findViewById(R.id.id_pressure);
         soundText = (TextView) v.findViewById(R.id.id_sound);
-        left_tv = (TextView) v.findViewById(R.id.tv_id_left);
 
         startTrackingBtn = (Button) v.findViewById(R.id.id_startTrackingBtn);
         stopTrackingBtn = (Button) v.findViewById(R.id.id_stopTrackingBtn);
-        logoutBtn = (Button) v.findViewById(R.id.logout_btn_id);
 
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         fAuth = FirebaseAuth.getInstance();
@@ -491,6 +481,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
 //        StopTrackingData();
 
+        DisplayCarRunningImage();
         dialog.setContentView(R.layout.alarm_dialog_layout);
         dialog.setCanceledOnTouchOutside(false);
         dialog.setCancelable(false);
