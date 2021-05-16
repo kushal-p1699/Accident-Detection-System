@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.Animatable;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -33,6 +35,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +50,8 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.example.accidentdetectionsystem.CLocation;
 import com.example.accidentdetectionsystem.Login_Activity;
 import com.example.accidentdetectionsystem.MainActivity;
@@ -91,6 +96,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
     private Button startTrackingBtn, stopTrackingBtn, logoutBtn, cancelAlarm;
     private SensorManager sensorManager;
     private Sensor accelerometerSensor;
+    private ImageView carRunningGif;
     private double lastUpdate = 0;
 
     private FirebaseAuth fAuth;
@@ -143,6 +149,8 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
     public boolean isProcessRunning = false;
     HospitalData hospitalData;
 
+    GifDrawable drawable;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -150,19 +158,23 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         Initialize(root);
 
+        // display car running image
+        DisplayCarRunningImage();
+
         // get all hospital data
         readHospitalData();
 
-
         // get all Drivers Details data
         readDriversData();
-
 
         startTrackingBtn.setOnClickListener(new OnClickListener(){
             @Override
             public void onClick(View v) {
 
                 isProcessRunning = true;
+
+                // start gif
+                DisplayCarRunningGif();
 
                 final DocumentReference documentReference = fStore.collection("users").document(userId);
                 documentReference.addSnapshotListener(getActivity(), new EventListener<DocumentSnapshot>() {
@@ -267,6 +279,16 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
 
         return root;
+    }
+
+    private void DisplayCarRunningImage() {
+        Glide.with(this).clear(carRunningGif);
+        Glide.with(this).load(R.drawable.car_running_image).into(carRunningGif);
+    }
+
+    private void DisplayCarRunningGif() {
+        Glide.with(this).clear(carRunningGif);
+        Glide.with(this).asGif().load(R.drawable.car_running_gif).into(carRunningGif);
     }
 
     private void StoreProfileDataToPref(Map<String, String> pData) {
@@ -440,6 +462,8 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         fAuth = FirebaseAuth.getInstance();
         fStore = FirebaseFirestore.getInstance();
         userId = fAuth.getCurrentUser().getUid();
+
+        carRunningGif = (ImageView) v.findViewById(R.id.id_car_running_gif);
 
         dialog = new Dialog(getContext());
 
