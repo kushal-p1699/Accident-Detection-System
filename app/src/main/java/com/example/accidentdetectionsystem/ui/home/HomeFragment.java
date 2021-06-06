@@ -152,6 +152,10 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
     GifDrawable drawable;
 
+    AlarmSound alarmSound;
+
+    private int ALARM_DELAY = 30000;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -490,6 +494,8 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         dialog = new Dialog(getContext());
 
+        alarmSound = new AlarmSound(getContext());
+
     }
 
     private void ProcessDataToDetectAccident() {
@@ -499,6 +505,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
             // alert alarm to the driver
             OpenAlarmDialog();
+
 
             return;
 
@@ -511,6 +518,9 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
     }
 
     private void OpenAlarmDialog() {
+
+        // play alarm audio
+        alarmSound.Play();
 
 //        StopTrackingData();
 
@@ -528,6 +538,10 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         cancelAlarm.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                // stop alarm audio
+                alarmSound.Stop();
+
                 isCanceled[0] = true;
                 CancelAlarmAlert();
                 countDownTimer.cancel();
@@ -537,7 +551,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         // close dialog after 10sec send Location to Hospital
         if(!isCanceled[0]){
-            countDownTimer = new CountDownTimer(10000, 1000) {
+            countDownTimer = new CountDownTimer(ALARM_DELAY, 1000) {
                 @Override
                 public void onTick(long millisUntilFinished) {
                     alarmTimeLeftText.setText((millisUntilFinished / 1000) +" seconds");
