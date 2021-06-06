@@ -560,6 +560,9 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                 @Override
                 public void onFinish() {
 
+                    // stop alarm audio
+                    alarmSound.Stop();
+
 //                    alarmTimeLeftText.setText("Accident is informed to Hospitals \n Waiting for response...");
 //                    left_tv.setVisibility(View.GONE);
 
