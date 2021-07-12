@@ -178,8 +178,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
                 isProcessRunning = true;
 
-                // start gif
-                DisplayCarRunningGif();
+
 
                 final DocumentReference documentReference = fStore.collection("users").document(userId);
                 documentReference.addSnapshotListener(getActivity(), new EventListener<DocumentSnapshot>() {
@@ -227,7 +226,8 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
 
                             /** if profile is updated then, Start tracking **/
-
+                            // start gif
+                            DisplayCarRunningGif();
                             stopTrackingBtn.setVisibility(View.VISIBLE);
                             startTrackingBtn.setVisibility(View.INVISIBLE);
 
