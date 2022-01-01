@@ -71,6 +71,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import android.view.View.OnClickListener;
@@ -162,7 +163,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
         View root = inflater.inflate(R.layout.fragment_home, container, false);
 
         Initialize(root);
-
+//        startTrackingBtn.setVisibility(View.VISIBLE);
         // display car running image
         DisplayCarRunningImage();
 
@@ -231,7 +232,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                             stopTrackingBtn.setVisibility(View.VISIBLE);
                             startTrackingBtn.setVisibility(View.INVISIBLE);
 
-                            Toast.makeText(getActivity(), "Tracking is started...", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(getActivity(), "Tracking is started...", Toast.LENGTH_SHORT).show();
 
                             ProcessSensors();
                             onResume();
@@ -342,7 +343,12 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         Gson gson = new Gson();
         java.lang.reflect.Type type = new TypeToken<Map<String, Map<String, String>>>(){}.getType();
-        map = gson.fromJson(storedHashMapString, type);
+        try{
+            map = gson.fromJson(storedHashMapString, type);
+        }catch (IllegalStateException | JsonSyntaxException exception){
+            exception.printStackTrace();
+        }
+
 
         return map;
     }
@@ -357,7 +363,12 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 
         Gson gson = new Gson();
         java.lang.reflect.Type type = new TypeToken<Map<String, Map<String, Map<String, String>>>>(){}.getType();
-        map = gson.fromJson(storedHashMapString, type);
+        try{
+            map = gson.fromJson(storedHashMapString, type);
+        }catch (IllegalStateException | JsonSyntaxException exception){
+            exception.printStackTrace();
+        }
+
 
         return map;
 
@@ -589,9 +600,9 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
                             String smsBody = "Hey, "+name+"\n\n"+"There is an emergency!!"+"\n"+"Person with name "+p_map.get("p_name")+" met with an accident"+"\n\n"
                                     +"Blood Group: "+p_map.get("blood_group")+"\n"+"Family Contact Number: "+"\n"
                                     +p_map.get("help phone1")+"\n"
-                                    +p_map.get("help phone2")+"\n"
-                                    +p_map.get("help phone3")+"\n"
-                                    +"\n"+"Accident Spot: "+address+"\n\n"+"Location: "+gpsLink+"\n\n"
+
+                                    +"\n"+"Accident    +p_map.get(\"help phone2\")+\"\\n\"\n" +
+                                    "                                    +p_map.get(\"help phone3\")+\"\\n\" Spot: "+address+"\n\n"+"Location: "+gpsLink+"\n\n"
                                     +"If you're available to pick him up, Please replay 'YES' to this message"+"\n";
                             sendMessage(sendTo, smsBody);
                         }
@@ -683,7 +694,7 @@ public class HomeFragment extends Fragment implements SensorEventListener, Locat
 //                return;
 //            }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
-            Toast.makeText(getActivity(), "waiting for gps connection!", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getActivity(), "waiting for gps connection!", Toast.LENGTH_SHORT).show();
         }
     }
 

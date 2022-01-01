@@ -173,6 +173,7 @@
         android:layout_marginRight="32dp"
         android:text="START TRACKING"
         android:textSize="20sp"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tableLayout" />
